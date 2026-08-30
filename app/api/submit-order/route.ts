@@ -3,7 +3,7 @@ import { getServiceClient } from '@/lib/supabase'
 import { Resend } from 'resend'
 import { formatPrice } from '@/lib/utils'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = new Resend(process.env.RESEND_API_KEY || 're_disabled')
 
 async function getLogoUrl(): Promise<string> {
   try {

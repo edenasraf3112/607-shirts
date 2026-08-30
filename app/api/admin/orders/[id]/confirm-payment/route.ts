@@ -6,7 +6,7 @@ import { formatPrice } from '@/lib/utils'
 import { customerGroupKey } from '@/lib/customerGroups'
 import { getOrCreatePickupNumber } from '@/lib/pickupNumbers'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = new Resend(process.env.RESEND_API_KEY || 're_disabled')
 
 function isAuthed(): boolean {
   return !!cookies().get('admin_session')?.value
