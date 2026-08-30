@@ -1,0 +1,9 @@
+<!-- Replace with final favicon.svg -->
+<!-- Used as browser tab icon -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" fill="#1A1A1A"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+    font-family="Georgia, serif" font-size="18" fill="#FAFAF8">
+    L
+  </text>
+</svg>

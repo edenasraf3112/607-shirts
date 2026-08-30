@@ -1,0 +1,28 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "memorial-site",
+      "runtimeExecutable": "npx.cmd",
+      "runtimeArgs": ["serve", "-l", "3400", "C:\\Users\\Legion\\OneDrive\\שולחן העבודה\\אתר"],
+      "port": 3400
+    },
+    {
+      "name": "fitness-app-web",
+      "runtimeExecutable": "npm.cmd",
+      "runtimeArgs": [
+        "--prefix",
+        "C:\\Users\\Legion\\OneDrive\\שולחן העבודה\\fitness-app",
+        "run",
+        "web"
+      ],
+      "port": 8081
+    }
+  ]
+}

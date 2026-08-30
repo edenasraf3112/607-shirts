@@ -1,0 +1,15 @@
+node_modules/
+.next/
+.env.local
+.env*.local
+.env.vercel
+*.log
+.DS_Store
+Thumbs.db
+
+.vercel
+
+# Per-developer tool permissions - accumulates approved command strings over
+# time (including full command args), so it can end up holding secrets that
+# were only ever meant to be typed into a local terminal, not committed.
+.claude/settings.local.json
