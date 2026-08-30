@@ -12,14 +12,8 @@ import { useAuth } from '@/contexts/AuthContext'
 const DEFAULT_LOGO = '/assets/branding/brand-logo.png'
 
 const navLinks = [
-  { label: 'הכל', href: '/shop/all' },
-  { label: 'גברים', href: '/shop/men' },
-  { label: 'נשים', href: '/shop/women' },
-  { label: 'אקססוריז', href: '/shop/accessories' },
-  { label: 'מדבקות & דגלים', href: '/stickers-flags' },
-  { label: 'הסיפור שלו', href: '/story' },
-  { label: 'קולקציות עבר', href: '/past-collections' },
-  { label: 'הודעה אלינו', href: '/contact' },
+  { label: 'החנות', href: '/shop/all' },
+  { label: 'צור קשר', href: '/contact' },
 ]
 
 export default function Navbar() {
@@ -80,7 +74,7 @@ export default function Navbar() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={logoSrc}
-                alt="Nehoray Leizer"
+                alt="607 חולצות"
                 className="h-10 md:h-32 w-auto object-contain"
               />
             </Link>
@@ -188,7 +182,7 @@ export default function Navbar() {
         >
           <div className="flex items-center justify-between p-6 border-b border-light-gray">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logoSrc} alt="Nehoray Leizer" className="h-8 w-auto object-contain" />
+            <img src={logoSrc} alt="607 חולצות" className="h-8 w-auto object-contain" />
             <button
               onClick={() => setOpen(false)}
               className="p-1 text-charcoal hover:opacity-60"
@@ -226,7 +220,7 @@ export default function Navbar() {
           </nav>
           <div className="mt-auto p-6 border-t border-light-gray">
             <p className="text-xs text-warm-gray text-center" style={{ letterSpacing: '0.1em' }}>
-              Nehoray Leizer
+              607 חולצות
             </p>
           </div>
         </div>

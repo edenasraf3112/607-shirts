@@ -16,23 +16,23 @@ export type HeroSlide = {
 export const DEFAULT_SLIDES: HeroSlide[] = [
   {
     image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=85',
-    title: 'לבוש את הסיפור',
-    subtitle: 'קולקציה 01 — עכשיו פתוחה להזמנות',
-    cta: 'Shop Collection',
+    title: '607 חולצות',
+    subtitle: 'איכות, נוחות ועיצוב בכל פריט',
+    cta: 'לחנות',
     href: '/shop/all',
   },
   {
     image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&q=85',
-    title: 'כשבגד נושא זיכרון',
-    subtitle: 'כל פריט מספר סיפור',
-    cta: 'הסיפור שלנו',
-    href: '/story',
+    title: 'הזמנות מיוחדות',
+    subtitle: 'חולצות וכובעים, מיוצרים לפי הזמנה',
+    cta: 'לצפייה במוצרים',
+    href: '/shop/all',
   },
   {
     image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=1600&q=85',
     title: 'מיוצר לפי הזמנה',
-    subtitle: 'איכות בלתי מתפשרת, לזכר אהוב',
-    cta: 'הצטרפו לקולקציה',
+    subtitle: 'איכות בלתי מתפשרת',
+    cta: 'הצטרפו',
     href: '/shop/all',
   },
 ]
@@ -84,7 +84,7 @@ export default function HeroSlider({ slides }: { slides?: HeroSlide[] }) {
             className="text-xs tracking-widest uppercase mb-6 text-cream/70"
             style={{ letterSpacing: '0.35em' }}
           >
-            Nehoray Leizer
+            607 חולצות
           </p>
           <h1
             key={current}
@@ -106,13 +106,6 @@ export default function HeroSlider({ slides }: { slides?: HeroSlide[] }) {
               style={{ letterSpacing: '0.25em' }}
             >
               {SLIDES[current].cta}
-            </Link>
-            <Link
-              href="/story"
-              className="text-xs tracking-widest text-cream/70 hover:text-cream transition-colors underline underline-offset-4"
-              style={{ letterSpacing: '0.2em' }}
-            >
-              הסיפור שלנו
             </Link>
           </div>
         </div>

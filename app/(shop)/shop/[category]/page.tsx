@@ -7,10 +7,7 @@ import { isUnderConstruction, type UnderConstructionKey } from '@/lib/underConst
 import UnderConstructionPage from '@/components/UnderConstructionPage'
 
 const CATEGORIES: Record<string, { label: string; tag: string; description: string; ucKey: UnderConstructionKey }> = {
-  all: { label: 'כל המוצרים', tag: 'all', description: 'הקולקציה המלאה של Nehoray Leizer', ucKey: 'shop_all' },
-  men: { label: 'גברים', tag: 'גברים', description: 'קולקציית הגברים — גזרות נקיות, איכות פרימיום', ucKey: 'shop_men' },
-  women: { label: 'נשים', tag: 'נשים', description: 'קולקציית הנשים — עיצוב עדין ומכבד', ucKey: 'shop_women' },
-  accessories: { label: 'אקססוריז', tag: 'אקססוריז', description: 'אקססוריז מיוחדים עם חריטה אישית', ucKey: 'shop_accessories' },
+  all: { label: 'החנות', tag: 'all', description: 'כל הפריטים הזמינים להזמנה', ucKey: 'shop_all' },
 }
 
 export default async function CategoryPage({ params }: { params: { category: string } }) {

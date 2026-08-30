@@ -3,17 +3,17 @@ import './globals.css'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
-  title: 'Nehoray Leizer',
-  description: 'מותג בגדים שנוסד לזכר נהוראי ליזר. קולקציות פרימיום מיוצרות לפי הזמנה.',
-  keywords: 'Nehoray Leizer, נהוראי ליזר, בגדים, אופנה, קולקציה',
+  title: '607 חולצות',
+  description: '607 חולצות — חולצות וכובעים בהזמנה מראש.',
+  keywords: '607 חולצות, בגדים, חולצות, כובעים',
   icons: {
     icon: '/assets/branding/favicon.svg',
     apple: '/assets/branding/apple-touch-icon.png',
     shortcut: '/assets/branding/favicon.svg',
   },
   openGraph: {
-    title: 'Nehoray Leizer',
-    description: 'מותג בגדים שנוסד לזכר נהוראי ליזר',
+    title: '607 חולצות',
+    description: '607 חולצות — חולצות וכובעים בהזמנה מראש.',
     type: 'website',
     locale: 'he_IL',
   },
