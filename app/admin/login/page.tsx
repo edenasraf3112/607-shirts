@@ -18,7 +18,7 @@ export default function AdminLogin() {
     const res = await fetch('/api/admin/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username: username.trim(), password }),
     })
     if (res.ok) {
       router.push('/admin')
@@ -45,6 +45,9 @@ export default function AdminLogin() {
               value={username}
               onChange={e => setUsername(e.target.value)}
               autoComplete="username"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
               required
             />
           </div>
