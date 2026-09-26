@@ -165,7 +165,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         const logoUrl = await getLogoUrl()
         const pickupNumber = await getOrCreatePickupNumber(customerGroupKey(order), order.customer_name)
         await resend.emails.send({
-          from: 'Nehoray Leizer <orders@nehorayleizer.com>',
+          from: `Nehoray Leizer <${process.env.EMAIL_FROM || 'orders@nehorayleizer.com'}>`,
           to: order.customer_email,
           subject: '✓ התשלום התקבל — ההזמנה שלך בייצור',
           html: paymentConfirmationEmail({

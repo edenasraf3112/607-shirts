@@ -17,6 +17,26 @@ async function getLogoUrl(): Promise<string> {
   return 'https://nehorayleizer.com/assets/branding/brand-logo.png'
 }
 
+async function getBitPaySettings(): Promise<{ phone: string; link: string }> {
+  try {
+    const { data } = await getServiceClient()
+      .from('site_content')
+      .select('key, value')
+      .in('key', ['admin_bit_phone', 'admin_bit_link'])
+    const map: Record<string, string> = {}
+    for (const row of data || []) map[row.key] = row.value
+    return { phone: map['admin_bit_phone'] || '', link: map['admin_bit_link'] || '' }
+  } catch {
+    return { phone: '', link: '' }
+  }
+}
+
+function bitPayLink(settings: { phone: string; link: string }): string {
+  if (settings.link) return settings.link
+  if (settings.phone) return `https://www.bitpay.co.il/app/transfer?phoneNumber=${settings.phone}`
+  return ''
+}
+
 function orderConfirmationEmail(order: {
   customerName: string
   logoUrl: string
@@ -24,6 +44,8 @@ function orderConfirmationEmail(order: {
   total: number
   discountAmount: number
   discountCode?: string
+  bitPhone: string
+  bitLink: string
 }) {
   const itemsHtml = order.items.map(item => `
     <tr>
@@ -97,10 +119,18 @@ function orderConfirmationEmail(order: {
             <!-- Payment note -->
             <div style="margin-top:32px;padding:20px 24px;background:#FAFAF8;border-right:3px solid #1A1A1A;">
               <p style="margin:0 0 8px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#1A1A1A;font-family:Arial,sans-serif;">שלב הבא — תשלום</p>
+              ${order.bitLink || order.bitPhone ? `
+              <p style="margin:0 0 14px;font-size:13px;color:#6B6560;line-height:1.8;font-family:Arial,sans-serif;">
+                נא להעביר <strong style="color:#1A1A1A;">${formatPrice(order.total)}</strong> באמצעות ביט${order.bitPhone ? ` למספר <strong style="color:#1A1A1A;" dir="ltr">${order.bitPhone}</strong>` : ''}.
+                רק לאחר קבלת התשלום תיכנס ההזמנה לייצור.
+              </p>
+              ${order.bitLink ? `<a href="${order.bitLink}" style="display:inline-block;padding:12px 28px;background:#1A1A1A;color:#FAFAF8;text-decoration:none;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif;">לתשלום בביט</a>` : ''}
+              ` : `
               <p style="margin:0;font-size:13px;color:#6B6560;line-height:1.8;font-family:Arial,sans-serif;">
                 לאחר אישור ההזמנה נפנה אליך לתשלום דרך Bit, העברה בנקאית או כל אמצעי נוח לך.<br>
                 רק לאחר קבלת התשלום תיכנס ההזמנה לייצור.
               </p>
+              `}
             </div>
 
           </td>
@@ -180,17 +210,20 @@ export async function POST(req: Request) {
     // Send emails (non-blocking — don't fail the order if email fails)
     try {
       const logoUrl = await getLogoUrl()
+      const bitSettings = await getBitPaySettings()
       const finalTotal = total - discountAmount
 
       // 1. Confirmation to customer
       await resend.emails.send({
-        from: 'Nehoray Leizer <orders@nehorayleizer.com>',
+        from: `Nehoray Leizer <${process.env.EMAIL_FROM || 'orders@nehorayleizer.com'}>`,
         to: form.email,
         subject: `אישור הזמנה התקבלה — Nehoray Leizer`,
         html: orderConfirmationEmail({
           customerName: form.name, logoUrl,
           items: orderItems, total: finalTotal,
           discountAmount, discountCode,
+          bitPhone: bitSettings.phone,
+          bitLink: bitPayLink(bitSettings),
         }),
       })
 
@@ -209,7 +242,7 @@ export async function POST(req: Request) {
           </tr>`
         ).join('')
         await resend.emails.send({
-          from: 'Nehoray Leizer <orders@nehorayleizer.com>',
+          from: `Nehoray Leizer <${process.env.EMAIL_FROM || 'orders@nehorayleizer.com'}>`,
           to: adminEmail,
           subject: `🛍️ הזמנה חדשה — ${form.name} — ${formatPrice(finalTotal)}`,
           html: `<!DOCTYPE html>
