@@ -18,7 +18,7 @@ async function getLogoUrl(): Promise<string> {
       .from('site_content').select('value').eq('key', 'logo_url').single()
     if (data?.value) return data.value
   } catch {}
-  return 'https://nehorayleizer.com/assets/branding/brand-logo.png'
+  return 'https://607-shirts.vercel.app/assets/branding/brand-logo.png'
 }
 
 function paymentConfirmationEmail(order: {
@@ -53,7 +53,7 @@ function paymentConfirmationEmail(order: {
         <!-- Logo -->
         <tr>
           <td style="padding:36px 40px 28px;text-align:center;border-bottom:1px solid #E8E5E0;background:#ffffff;">
-            <img src="${order.logoUrl}" alt="Nehoray Leizer" style="max-height:72px;max-width:220px;width:auto;object-fit:contain;" />
+            <img src="${order.logoUrl}" alt="עדן אסרף" style="max-height:72px;max-width:220px;width:auto;object-fit:contain;" />
           </td>
         </tr>
 
@@ -118,12 +118,8 @@ function paymentConfirmationEmail(order: {
         <!-- Footer -->
         <tr>
           <td style="padding:24px 40px;background:#F2F0EC;text-align:center;border-top:1px solid #E8E5E0;">
-            <p style="margin:0 0 4px;font-size:11px;color:#6B6560;font-family:Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;">Nehoray Leizer</p>
-            <p style="margin:0 0 4px;font-size:11px;color:#6B6560;font-family:Arial,sans-serif;">
-              <a href="https://nehorayleizer.com" style="color:#6B6560;text-decoration:none;">nehorayleizer.com</a>
-              &nbsp;·&nbsp; לכבוד זכרו של נהוראי ליזר
-            </p>
-            <p style="margin:8px 0 0;font-size:10px;color:#9B958F;font-family:Arial,sans-serif;">לפניות: <a href="mailto:orders@nehorayleizer.com" style="color:#9B958F;text-decoration:none;">orders@nehorayleizer.com</a></p>
+            <p style="margin:0 0 4px;font-size:11px;color:#6B6560;font-family:Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;">עדן אסרף</p>
+            <p style="margin:8px 0 0;font-size:10px;color:#9B958F;font-family:Arial,sans-serif;">לפניות: <a href="tel:0503313034" style="color:#9B958F;text-decoration:none;" dir="ltr">050-3313034</a></p>
           </td>
         </tr>
 
@@ -165,7 +161,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         const logoUrl = await getLogoUrl()
         const pickupNumber = await getOrCreatePickupNumber(customerGroupKey(order), order.customer_name)
         await resend.emails.send({
-          from: `Nehoray Leizer <${process.env.EMAIL_FROM || 'orders@nehorayleizer.com'}>`,
+          from: `עדן אסרף <${process.env.EMAIL_FROM || 'orders@nehorayleizer.com'}>`,
           to: order.customer_email,
           subject: '✓ התשלום התקבל — ההזמנה שלך בייצור',
           html: paymentConfirmationEmail({

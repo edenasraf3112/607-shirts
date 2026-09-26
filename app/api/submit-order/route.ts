@@ -14,7 +14,7 @@ async function getLogoUrl(): Promise<string> {
       .single()
     if (data?.value) return data.value
   } catch {}
-  return 'https://nehorayleizer.com/assets/branding/brand-logo.png'
+  return 'https://607-shirts.vercel.app/assets/branding/brand-logo.png'
 }
 
 async function getBitPaySettings(): Promise<{ phone: string; link: string }> {
@@ -70,7 +70,7 @@ function orderConfirmationEmail(order: {
         <!-- Logo header -->
         <tr>
           <td style="padding:40px 40px 32px;text-align:center;border-bottom:1px solid #E8E5E0;background:#ffffff;">
-            <img src="${order.logoUrl}" alt="Nehoray Leizer" style="max-height:80px;max-width:240px;width:auto;object-fit:contain;" />
+            <img src="${order.logoUrl}" alt="עדן אסרף" style="max-height:80px;max-width:240px;width:auto;object-fit:contain;" />
           </td>
         </tr>
 
@@ -81,8 +81,8 @@ function orderConfirmationEmail(order: {
             <!-- Greeting -->
             <p style="margin:0 0 6px;font-size:18px;color:#1A1A1A;font-family:Georgia,serif;font-weight:400;">שלום ${order.customerName},</p>
             <p style="margin:0 0 28px;font-size:14px;color:#6B6560;line-height:1.8;font-family:Arial,sans-serif;">
-              קיבלנו את הזמנתך בהצלחה — תודה שבחרת ב-Nehoray Leizer.<br>
-              אנו ניצור איתך קשר בהקדם לסיום תהליך התשלום ואישור ההזמנה הסופי.
+              קיבלנו את הזמנתך בהצלחה — תודה שבחרת בעדן אסרף.<br>
+              נצור איתך קשר בהקדם לסיום תהליך התשלום ואישור ההזמנה הסופי.
             </p>
 
             <!-- Divider -->
@@ -121,7 +121,7 @@ function orderConfirmationEmail(order: {
               <p style="margin:0 0 8px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#1A1A1A;font-family:Arial,sans-serif;">שלב הבא — תשלום</p>
               ${order.bitLink || order.bitPhone ? `
               <p style="margin:0 0 14px;font-size:13px;color:#6B6560;line-height:1.8;font-family:Arial,sans-serif;">
-                נא להעביר <strong style="color:#1A1A1A;">${formatPrice(order.total)}</strong> באמצעות ביט${order.bitPhone ? ` למספר <strong style="color:#1A1A1A;" dir="ltr">${order.bitPhone}</strong>` : ''}.
+                עכשיו יש להעביר את הסכום הסופי — <strong style="color:#1A1A1A;">${formatPrice(order.total)}</strong> — בביט${order.bitLink ? ' דרך הקישור' : ''}${order.bitPhone ? `, או למספר <strong style="color:#1A1A1A;" dir="ltr">${order.bitPhone}</strong>` : ''}.
                 רק לאחר קבלת התשלום תיכנס ההזמנה לייצור.
               </p>
               ${order.bitLink ? `<a href="${order.bitLink}" style="display:inline-block;padding:12px 28px;background:#1A1A1A;color:#FAFAF8;text-decoration:none;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif;">לתשלום בביט</a>` : ''}
@@ -145,7 +145,7 @@ function orderConfirmationEmail(order: {
                 <strong style="color:#1A1A1A;">ביטול עסקה:</strong> ניתן לבטל את ההזמנה עד 24 שעות לאחר ביצוע התשלום בפועל. לאחר מכן, בשל כך שהמוצרים מיוצרים לפי הזמנה אישית, לא ניתן לבטל ולא יינתן החזר כספי.
               </p>
               <p style="margin:0;font-size:12px;color:#6B6560;line-height:1.8;font-family:Arial,sans-serif;">
-                <strong style="color:#1A1A1A;">זמני אספקה:</strong> זמן הייצור והאספקה נקבע בהתאם ללוחות הזמנים של המפעל והיצרן. נעדכן אותך לגבי מועד האספקה הצפוי לאחר אישור התשלום. Nehoray Leizer אינה אחראית לעיכובים הנובעים מגורמי ייצור וספקים חיצוניים.
+                <strong style="color:#1A1A1A;">זמני אספקה:</strong> זמן הייצור והאספקה נקבע בהתאם ללוחות הזמנים של המפעל והיצרן. נעדכן אותך לגבי מועד האספקה הצפוי לאחר אישור התשלום. אין אחריות לעיכובים הנובעים מגורמי ייצור וספקים חיצוניים.
               </p>
             </div>
           </td>
@@ -155,14 +155,10 @@ function orderConfirmationEmail(order: {
         <tr>
           <td style="padding:24px 40px;background:#F2F0EC;text-align:center;border-top:1px solid #E8E5E0;">
             <p style="margin:0 0 4px;font-size:11px;color:#6B6560;font-family:Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;">
-              Nehoray Leizer
-            </p>
-            <p style="margin:0 0 4px;font-size:11px;color:#6B6560;font-family:Arial,sans-serif;">
-              <a href="https://nehorayleizer.com" style="color:#6B6560;text-decoration:none;">nehorayleizer.com</a>
-              &nbsp;·&nbsp; לכבוד זכרו של נהוראי ליזר
+              עדן אסרף
             </p>
             <p style="margin:8px 0 0;font-size:10px;color:#9B958F;font-family:Arial,sans-serif;">
-              קיבלת אימייל זה כי ביצעת הזמנה באתר Nehoray Leizer. לפניות: <a href="mailto:orders@nehorayleizer.com" style="color:#9B958F;text-decoration:none;">orders@nehorayleizer.com</a>
+              קיבלת אימייל זה כי ביצעת הזמנה. לפניות: <a href="tel:0503313034" style="color:#9B958F;text-decoration:none;" dir="ltr">050-3313034</a>
             </p>
           </td>
         </tr>
@@ -215,9 +211,9 @@ export async function POST(req: Request) {
 
       // 1. Confirmation to customer
       await resend.emails.send({
-        from: `Nehoray Leizer <${process.env.EMAIL_FROM || 'orders@nehorayleizer.com'}>`,
+        from: `עדן אסרף <${process.env.EMAIL_FROM || 'orders@nehorayleizer.com'}>`,
         to: form.email,
-        subject: `אישור הזמנה התקבלה — Nehoray Leizer`,
+        subject: `אישור הזמנה התקבלה — עדן אסרף`,
         html: orderConfirmationEmail({
           customerName: form.name, logoUrl,
           items: orderItems, total: finalTotal,
@@ -242,7 +238,7 @@ export async function POST(req: Request) {
           </tr>`
         ).join('')
         await resend.emails.send({
-          from: `Nehoray Leizer <${process.env.EMAIL_FROM || 'orders@nehorayleizer.com'}>`,
+          from: `עדן אסרף <${process.env.EMAIL_FROM || 'orders@nehorayleizer.com'}>`,
           to: adminEmail,
           subject: `🛍️ הזמנה חדשה — ${form.name} — ${formatPrice(finalTotal)}`,
           html: `<!DOCTYPE html>
@@ -254,7 +250,7 @@ export async function POST(req: Request) {
       <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #E8E5E0;max-width:560px;width:100%;">
         <tr>
           <td style="padding:28px 32px;text-align:center;border-bottom:1px solid #E8E5E0;background:#ffffff !important;">
-            <img src="${logoUrl}" alt="Nehoray Leizer" style="max-height:60px;max-width:200px;width:auto;object-fit:contain;background:#ffffff;" />
+            <img src="${logoUrl}" alt="עדן אסרף" style="max-height:60px;max-width:200px;width:auto;object-fit:contain;background:#ffffff;" />
           </td>
         </tr>
         <tr>
@@ -283,12 +279,12 @@ export async function POST(req: Request) {
               </tr>
             </table>
             ${form.notes ? `<p style="margin:16px 0 0;font-size:13px;color:#6B6560;font-style:italic;font-family:Arial,sans-serif;">הערות: ${form.notes}</p>` : ''}
-            <a href="https://nehorayleizer.com/admin/orders" style="display:inline-block;margin-top:20px;padding:12px 28px;background:#1A1A1A;color:#ffffff;text-decoration:none;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif;">לניהול הזמנות</a>
+            <a href="https://607-shirts.vercel.app/admin/orders" style="display:inline-block;margin-top:20px;padding:12px 28px;background:#1A1A1A;color:#ffffff;text-decoration:none;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif;">לניהול הזמנות</a>
           </td>
         </tr>
         <tr>
           <td style="padding:16px 32px;background:#F2F0EC;text-align:center;border-top:1px solid #E8E5E0;">
-            <p style="margin:0;font-size:10px;color:#9B958F;font-family:Arial,sans-serif;letter-spacing:1px;">Nehoray Leizer Admin Notification</p>
+            <p style="margin:0;font-size:10px;color:#9B958F;font-family:Arial,sans-serif;letter-spacing:1px;">התראת הזמנה חדשה</p>
           </td>
         </tr>
       </table>
