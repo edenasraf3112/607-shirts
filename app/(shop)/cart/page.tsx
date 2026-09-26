@@ -178,10 +178,6 @@ export default function CartPage() {
                     <input className="form-input" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="your@email.com" />
                   </div>
                   <div className="col-span-2">
-                    <label className="form-label">כתובת למשלוח</label>
-                    <input className="form-input" value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
-                  </div>
-                  <div className="col-span-2">
                     <label className="form-label">הערות</label>
                     <textarea className="form-input h-24 resize-none" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} />
                   </div>
