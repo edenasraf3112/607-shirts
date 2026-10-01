@@ -13,33 +13,34 @@ const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL']
 export default function ExportProductionButton({ collections, products = [] }: { collections: Item[]; products?: Item[] }) {
   const [open, setOpen] = useState(false)
   const [lang, setLang] = useState<'he' | 'en'>('he')
-  const [filter, setFilter] = useState<'all_paid' | 'collection' | 'product' | 'date_range'>('all_paid')
+  const [paidOnly, setPaidOnly] = useState(true)
   const [collectionId, setCollectionId] = useState('')
-  const [productQuery, setProductQuery] = useState('')
   const [productId, setProductId] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [loading, setLoading] = useState(false)
   const [excludeDemo, setExcludeDemo] = useState(true)
 
+  // All filters below are combinable — "paid only" + a specific product +
+  // a collection + a date range can all apply at the same time, instead of
+  // forcing a choice between them.
+  function buildParams() {
+    const params = new URLSearchParams({ paid_only: String(paidOnly), lang })
+    if (collectionId) params.set('collection_id', collectionId)
+    if (productId) {
+      const selectedProduct = products.find(p => p.id === productId)
+      if (selectedProduct) params.set('product', selectedProduct.name)
+    }
+    if (dateFrom) params.set('date_from', dateFrom)
+    if (dateTo) params.set('date_to', dateTo)
+    if (excludeDemo) params.set('exclude_demo', 'true')
+    return params
+  }
+
   async function exportSheet() {
     setLoading(true)
     try {
-      // all_paid → paid (uses paid_at IS NOT NULL on the server)
-      const apiFilter = filter === 'all_paid' ? 'paid' : filter
-      const params = new URLSearchParams({ filter: apiFilter, lang })
-      if (filter === 'collection' && collectionId) params.set('collection_id', collectionId)
-      if (filter === 'product') {
-        const selectedProduct = products.find(p => p.id === productId)
-        const query = selectedProduct ? selectedProduct.name : productQuery
-        if (query) params.set('product', query)
-      }
-      if (filter === 'date_range') {
-        if (dateFrom) params.set('date_from', dateFrom)
-        if (dateTo) params.set('date_to', dateTo)
-      }
-      if (excludeDemo) params.set('exclude_demo', 'true')
-
+      const params = buildParams()
       const res = await fetch(`/api/admin/orders/production-sheet?${params}`)
       const data = await res.json()
       if (!data.rows?.length) {
@@ -98,9 +99,7 @@ export default function ExportProductionButton({ collections, products = [] }: {
     setLoading(false)
   }
 
-  const canExport =
-    (filter !== 'collection' || collectionId !== '') &&
-    (filter !== 'product' || productId !== '' || productQuery !== '')
+  const printHref = `/admin/orders/production-print?${buildParams()}`
 
   return (
     <>
@@ -150,104 +149,68 @@ export default function ExportProductionButton({ collections, products = [] }: {
                 </div>
               </div>
 
-              {/* Filter */}
-              <div>
-                <label className="block text-xs font-medium text-charcoal mb-2 uppercase tracking-wider">סינון הזמנות</label>
-                <div className="space-y-2.5">
-                  {([
-                    { value: 'all_paid', label: 'כל ההזמנות ששולמו' },
-                    { value: 'collection', label: 'לפי קולקציה' },
-                    { value: 'product', label: 'לפי מוצר' },
-                    { value: 'date_range', label: 'לפי טווח תאריכים' },
-                  ] as const).map(opt => (
-                    <label key={opt.value} className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="prod-filter"
-                        value={opt.value}
-                        checked={filter === opt.value}
-                        onChange={() => { setFilter(opt.value); setProductId(''); setProductQuery('') }}
-                        className="accent-charcoal w-4 h-4"
-                      />
-                      <span className="text-sm text-charcoal">{opt.label}</span>
-                    </label>
-                  ))}
+              {/* Paid only toggle */}
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={paidOnly}
+                  onChange={e => setPaidOnly(e.target.checked)}
+                  className="w-4 h-4 accent-charcoal flex-shrink-0"
+                />
+                <div>
+                  <p className="text-sm text-charcoal">רק הזמנות ששולמו ואושרו</p>
+                  <p className="text-xs text-warm-gray">מסנן לפי סימון &quot;התקבל תשלום&quot;</p>
                 </div>
+              </label>
+
+              {/* Combinable filters: product, collection, date range — any subset can be set */}
+              <div>
+                <label className="block text-xs text-warm-gray mb-1.5">מוצר (אופציונלי)</label>
+                <select
+                  value={productId}
+                  onChange={e => setProductId(e.target.value)}
+                  className="w-full border border-light-gray rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-charcoal text-right bg-white"
+                  dir="rtl"
+                >
+                  <option value="">— כל המוצרים —</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Conditional inputs */}
-              {filter === 'collection' && (
-                <div>
-                  <label className="block text-xs text-warm-gray mb-1.5">בחר קולקציה</label>
-                  <select
-                    value={collectionId}
-                    onChange={e => setCollectionId(e.target.value)}
-                    className="w-full border border-light-gray rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-charcoal text-right bg-white"
-                    dir="rtl"
-                  >
-                    <option value="">— בחר קולקציה —</option>
-                    {collections.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div>
+                <label className="block text-xs text-warm-gray mb-1.5">קולקציה (אופציונלי)</label>
+                <select
+                  value={collectionId}
+                  onChange={e => setCollectionId(e.target.value)}
+                  className="w-full border border-light-gray rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-charcoal text-right bg-white"
+                  dir="rtl"
+                >
+                  <option value="">— כל הקולקציות —</option>
+                  {collections.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
 
-              {filter === 'product' && (
-                <div className="space-y-2">
-                  {products.length > 0 ? (
-                    <div>
-                      <label className="block text-xs text-warm-gray mb-1.5">בחר מוצר</label>
-                      <select
-                        value={productId}
-                        onChange={e => { setProductId(e.target.value); setProductQuery('') }}
-                        className="w-full border border-light-gray rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-charcoal text-right bg-white"
-                        dir="rtl"
-                      >
-                        <option value="">— כל המוצרים —</option>
-                        {products.map(p => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="block text-xs text-warm-gray mb-1.5">שם מוצר (חיפוש חלקי)</label>
-                      <input
-                        type="text"
-                        value={productQuery}
-                        onChange={e => setProductQuery(e.target.value)}
-                        placeholder="לדוגמה: T-Shirt"
-                        className="w-full border border-light-gray rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-charcoal text-right"
-                        dir="rtl"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {filter === 'date_range' && (
+              <div>
+                <label className="block text-xs text-warm-gray mb-1.5">טווח תאריכים (אופציונלי)</label>
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-warm-gray mb-1.5">מתאריך</label>
-                    <input
-                      type="date"
-                      value={dateFrom}
-                      onChange={e => setDateFrom(e.target.value)}
-                      className="w-full border border-light-gray rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-charcoal"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-warm-gray mb-1.5">עד תאריך</label>
-                    <input
-                      type="date"
-                      value={dateTo}
-                      onChange={e => setDateTo(e.target.value)}
-                      className="w-full border border-light-gray rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-charcoal"
-                    />
-                  </div>
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={e => setDateFrom(e.target.value)}
+                    className="w-full border border-light-gray rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-charcoal"
+                  />
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={e => setDateTo(e.target.value)}
+                    className="w-full border border-light-gray rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-charcoal"
+                  />
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Footer */}
@@ -265,9 +228,9 @@ export default function ExportProductionButton({ collections, products = [] }: {
                   <p className="text-xs text-warm-gray">מסנן הזמנות של {DEMO_EMAIL}</p>
                 </div>
               </label>
-              {/* Print/PDF — primary on mobile */}
+              {/* Print/PDF — primary on mobile, carries the exact same filters as Excel */}
               <a
-                href={`/admin/orders/production-print?status=${filter === 'all_paid' ? 'paid' : filter === 'collection' ? 'all' : filter === 'date_range' ? 'all' : filter === 'product' ? 'all' : 'all'}${filter === 'collection' && collectionId ? `&collection_id=${collectionId}` : ''}&exclude_demo=${excludeDemo}&lang=${lang}`}
+                href={printHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-5 py-2.5 bg-charcoal text-cream text-sm hover:bg-charcoal/80 transition-colors rounded-lg w-full"
@@ -285,7 +248,7 @@ export default function ExportProductionButton({ collections, products = [] }: {
                 </button>
                 <button
                   onClick={exportSheet}
-                  disabled={loading || !canExport}
+                  disabled={loading}
                   className="flex-1 flex items-center justify-center gap-2 px-5 py-2 border border-charcoal text-charcoal text-sm hover:bg-charcoal hover:text-cream transition-colors rounded-lg disabled:opacity-50"
                 >
                   <Download size={14} />

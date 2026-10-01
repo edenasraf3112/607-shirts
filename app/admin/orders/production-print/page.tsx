@@ -14,11 +14,17 @@ const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', '4XL'
 
 type Row = { product_name: string; color: string; size: string; quantity: number }
 
-async function fetchOrders(statusFilter: string, collectionId: string | null, excludeDemo: boolean) {
+async function fetchOrders(opts: {
+  paidOnly: boolean
+  collectionId: string | null
+  dateFrom: string | null
+  dateTo: string | null
+  excludeDemo: boolean
+}) {
   const db = getServiceClient()
-  let query = db.from('orders').select('items, status, created_at, customer_email')
+  let query = db.from('orders').select('items, status, created_at, customer_email, collection_id')
 
-  if (statusFilter === 'paid') {
+  if (opts.paidOnly) {
     // Use paid_at IS NOT NULL — the payment checkbox, not the status field
     try {
       const paidAtTest = await db.from('orders').select('paid_at').limit(0)
@@ -30,18 +36,12 @@ async function fetchOrders(statusFilter: string, collectionId: string | null, ex
     } catch {
       query = query.in('status', ['paid', 'production', 'packing', 'shipped', 'delivered'])
     }
-  } else if (statusFilter === 'pending') {
-    query = query.in('status', ['received', 'pending_payment'])
-  }
-  // 'all' = no status/payment filter
-
-  if (collectionId) {
-    query = query.eq('collection_id', collectionId)
   }
 
-  if (excludeDemo) {
-    query = query.neq('customer_email', DEMO_EMAIL)
-  }
+  if (opts.collectionId) query = query.eq('collection_id', opts.collectionId)
+  if (opts.dateFrom) query = query.gte('created_at', opts.dateFrom)
+  if (opts.dateTo) query = query.lte('created_at', opts.dateTo + 'T23:59:59.999Z')
+  if (opts.excludeDemo) query = query.neq('customer_email', DEMO_EMAIL)
 
   // Try with deleted_at filter; fall back if column doesn't exist
   try {
@@ -54,7 +54,7 @@ async function fetchOrders(statusFilter: string, collectionId: string | null, ex
   return data || []
 }
 
-function aggregateItems(orders: any[], isHe: boolean): { rows: Row[]; totalOrders: number; totalQty: number; debugItems: number } {
+function aggregateItems(orders: any[], isHe: boolean, productFilter: string | null): { rows: Row[]; totalOrders: number; totalQty: number; debugItems: number } {
   const map = new Map<string, Row>()
   let debugItems = 0
   const unknownProductLabel = isHe ? 'מוצר לא ידוע' : 'Unknown product'
@@ -76,6 +76,8 @@ function aggregateItems(orders: any[], isHe: boolean): { rows: Row[]; totalOrder
         item.title ||
         unknownProductLabel
       ).toString().trim() || unknownProductLabel
+
+      if (productFilter && !pName.toLowerCase().includes(productFilter.toLowerCase())) continue
 
       const color = (item.color || item.colour || '').toString()
       const size = (item.size || item.variant || '').toString()
@@ -107,12 +109,15 @@ function aggregateItems(orders: any[], isHe: boolean): { rows: Row[]; totalOrder
 export default async function ProductionPrintPage({
   searchParams,
 }: {
-  searchParams: { status?: string; collection_id?: string; exclude_demo?: string; lang?: string }
+  searchParams: { paid_only?: string; collection_id?: string; product?: string; date_from?: string; date_to?: string; exclude_demo?: string; lang?: string }
 }) {
   if (!isAuthed()) redirect('/admin/login')
 
-  const statusFilter = searchParams.status || 'all'
+  const paidOnly = searchParams.paid_only !== 'false'
   const collectionId = searchParams.collection_id || null
+  const product = searchParams.product || null
+  const dateFrom = searchParams.date_from || null
+  const dateTo = searchParams.date_to || null
   const excludeDemo = searchParams.exclude_demo !== 'false'
   const isHe = searchParams.lang !== 'en'
 
@@ -123,8 +128,8 @@ export default async function ProductionPrintPage({
   let fetchError = ''
 
   try {
-    const orders = await fetchOrders(statusFilter, collectionId, excludeDemo)
-    const result = aggregateItems(orders, isHe)
+    const orders = await fetchOrders({ paidOnly, collectionId, dateFrom, dateTo, excludeDemo })
+    const result = aggregateItems(orders, isHe, product)
     rows = result.rows
     totalOrders = result.totalOrders
     totalQty = result.totalQty
@@ -135,9 +140,11 @@ export default async function ProductionPrintPage({
 
   const today = new Date().toLocaleDateString(isHe ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' })
 
-  const filterLabel = isHe
-    ? (statusFilter === 'paid' ? 'הזמנות ששולמו' : statusFilter === 'pending' ? 'ממתינות לתשלום' : 'כל ההזמנות')
-    : (statusFilter === 'paid' ? 'Paid orders' : statusFilter === 'pending' ? 'Pending payment' : 'All orders')
+  const filterParts: string[] = []
+  filterParts.push(isHe ? (paidOnly ? 'הזמנות ששולמו' : 'כל ההזמנות') : (paidOnly ? 'Paid orders' : 'All orders'))
+  if (product) filterParts.push(isHe ? `מוצר: ${product}` : `Product: ${product}`)
+  if (dateFrom || dateTo) filterParts.push(isHe ? `טווח תאריכים: ${dateFrom || '…'} – ${dateTo || '…'}` : `Date range: ${dateFrom || '…'} – ${dateTo || '…'}`)
+  const filterLabel = filterParts.join(' · ')
 
   const grouped: { name: string; rows: Row[] }[] = []
   for (const row of rows) {
@@ -147,6 +154,20 @@ export default async function ProductionPrintPage({
     } else {
       grouped.push({ name: row.product_name, rows: [row] })
     }
+  }
+
+  function toggleUrl(overrides: Record<string, string>) {
+    const params = new URLSearchParams({
+      paid_only: String(paidOnly),
+      exclude_demo: String(excludeDemo),
+      lang: isHe ? 'he' : 'en',
+      ...(product ? { product } : {}),
+      ...(collectionId ? { collection_id: collectionId } : {}),
+      ...(dateFrom ? { date_from: dateFrom } : {}),
+      ...(dateTo ? { date_to: dateTo } : {}),
+      ...overrides,
+    })
+    return `/admin/orders/production-print?${params.toString()}`
   }
 
   return (
@@ -172,19 +193,15 @@ export default async function ProductionPrintPage({
       <div className="no-print" style={{ background: '#1A1A1A', padding: '10px 20px', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
         <a href="/admin/orders" style={{ color: '#FAFAF8', fontSize: 13, textDecoration: 'none', opacity: 0.7 }}>{isHe ? '← חזרה' : '← Back'}</a>
         <div style={{ flex: 1 }} />
-        {(['all', 'paid', 'pending'] as const).map(s => (
-          <a key={s}
-            href={`/admin/orders/production-print?status=${s}&exclude_demo=${excludeDemo}&lang=${isHe ? 'he' : 'en'}`}
-            style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, textDecoration: 'none', background: statusFilter === s ? '#FAFAF8' : 'transparent', color: statusFilter === s ? '#1A1A1A' : '#FAFAF8', border: '1px solid rgba(255,255,255,0.25)' }}
-          >
-            {isHe
-              ? (s === 'all' ? 'הכל' : s === 'paid' ? 'שולמו' : 'ממתינות')
-              : (s === 'all' ? 'All' : s === 'paid' ? 'Paid' : 'Pending')}
-          </a>
-        ))}
+        <a
+          href={toggleUrl({ paid_only: String(!paidOnly) })}
+          style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, textDecoration: 'none', background: paidOnly ? '#FAFAF8' : 'transparent', color: paidOnly ? '#1A1A1A' : '#FAFAF8', border: '1px solid rgba(255,255,255,0.25)' }}
+        >
+          {isHe ? (paidOnly ? '✓ רק ששולמו' : 'כולל לא שולמו') : (paidOnly ? '✓ Paid only' : 'Including unpaid')}
+        </a>
         <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.2)' }} />
         <a
-          href={`/admin/orders/production-print?status=${statusFilter}&exclude_demo=${!excludeDemo}&lang=${isHe ? 'he' : 'en'}`}
+          href={toggleUrl({ exclude_demo: String(!excludeDemo) })}
           style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, textDecoration: 'none', background: excludeDemo ? '#FAFAF8' : 'transparent', color: excludeDemo ? '#1A1A1A' : '#FAFAF8', border: '1px solid rgba(255,255,255,0.25)' }}
         >
           {isHe
@@ -200,7 +217,7 @@ export default async function ProductionPrintPage({
         <div style={{ borderBottom: '2px solid #1A1A1A', paddingBottom: 16, marginBottom: 28 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 400, letterSpacing: 1, marginBottom: 6, color: '#1A1A1A' }}>Nehoray Leizer</div>
+              <div style={{ fontSize: 22, fontWeight: 400, letterSpacing: 1, marginBottom: 6, color: '#1A1A1A' }}>607</div>
               <div style={{ fontSize: 17, fontWeight: 700 }}>{isHe ? 'רשימת מידות למפעל' : 'Production Size Sheet'}</div>
               <div style={{ fontSize: 12, color: '#6B6560', marginTop: 4 }}>{filterLabel}</div>
             </div>
@@ -232,8 +249,8 @@ export default async function ProductionPrintPage({
         {rows.length === 0 && !fetchError && (
           <div style={{ textAlign: 'center', padding: '48px 0', color: '#6B6560', fontSize: 15 }}>
             {isHe
-              ? (totalOrders === 0 ? 'לא נמצאו הזמנות — נסה סינון אחר' : `נמצאו ${totalOrders} הזמנות אך הן ריקות מפריטים`)
-              : (totalOrders === 0 ? 'No orders found — try a different filter' : `Found ${totalOrders} orders but they have no items`)}
+              ? (totalOrders === 0 ? 'לא נמצאו הזמנות — נסה סינון אחר' : `נמצאו ${totalOrders} הזמנות אך לא נמצאו בהן פריטים תואמים`)
+              : (totalOrders === 0 ? 'No orders found — try a different filter' : `Found ${totalOrders} orders but no matching items`)}
           </div>
         )}
 
@@ -282,7 +299,7 @@ export default async function ProductionPrintPage({
         )}
 
         <div style={{ marginTop: 40, paddingTop: 16, borderTop: '1px solid #E8E5E0', textAlign: 'center', fontSize: 11, color: '#9B958F', letterSpacing: 1 }}>
-          Nehoray Leizer · nehorayleizer.com
+          607
         </div>
       </div>
     </>
