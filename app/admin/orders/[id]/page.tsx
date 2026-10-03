@@ -1,9 +1,10 @@
 import AdminShell from '@/components/admin/AdminShell'
 import { getServiceClient } from '@/lib/supabase'
-import { formatPrice, formatDate, getStatusLabel, getStatusColor } from '@/lib/utils'
+import { formatDate, getStatusLabel, getStatusColor } from '@/lib/utils'
 import OrderStatusUpdater from '../OrderStatusUpdater'
 import OrderNotes from '../OrderNotes'
 import OrderTags from '../OrderTags'
+import OrderItemsEditor from '../OrderItemsEditor'
 import { Printer } from 'lucide-react'
 import type { Order } from '@/lib/supabase'
 
@@ -66,35 +67,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-light-gray p-6">
-          <h2 className="text-sm font-semibold text-charcoal tracking-wider uppercase mb-4">פריטים</h2>
-          <table className="w-full text-sm">
-            <thead className="border-b border-light-gray">
-              <tr>
-                <th className="text-right py-2 font-medium text-warm-gray">מוצר</th>
-                <th className="text-right py-2 font-medium text-warm-gray">מידה</th>
-                <th className="text-right py-2 font-medium text-warm-gray">צבע</th>
-                <th className="text-right py-2 font-medium text-warm-gray">כמות</th>
-                <th className="text-right py-2 font-medium text-warm-gray">מחיר</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(o.items as any[]).map((item, i) => (
-                <tr key={i} className="border-b border-light-gray last:border-0">
-                  <td className="py-2">{item.product_name}</td>
-                  <td className="py-2">{item.size || '-'}</td>
-                  <td className="py-2">{item.color || '-'}</td>
-                  <td className="py-2">{item.quantity}</td>
-                  <td className="py-2">{formatPrice(item.price * item.quantity)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="flex justify-between pt-4 mt-4 border-t border-light-gray font-medium text-charcoal">
-            <span>סה"כ</span>
-            <span>{formatPrice(o.total)}</span>
-          </div>
-        </div>
+        <OrderItemsEditor orderId={o.id} initialItems={o.items as any[]} discountAmount={o.discount_amount} />
 
         <div className="bg-white rounded-xl border border-light-gray p-6">
           <h2 className="text-sm font-semibold text-charcoal tracking-wider uppercase mb-4">הערות פנימיות</h2>
