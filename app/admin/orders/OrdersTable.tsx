@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, X, Printer, MessageCircle, Link2, Landmark } from 'lucide-react'
+import { Search, X, Printer, MessageCircle, Link2, Landmark, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { formatPrice, formatDate } from '@/lib/utils'
 import OrderStatusUpdater from './OrderStatusUpdater'
@@ -205,6 +205,14 @@ export default function OrdersTable({ orders, showTrash, showDelivery }: { order
                           currentStatus={order.status}
                           createdAt={order.created_at}
                         />
+                        {/* Open order detail — edit size/color/quantity, view full history */}
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="p-1.5 rounded text-warm-gray hover:text-charcoal hover:bg-cream-dark transition-colors"
+                          title="פתח הזמנה / ערוך מידה"
+                        >
+                          <Pencil size={14} />
+                        </Link>
                         {/* Print */}
                         <Link
                           href={`/admin/orders/${order.id}/print`}
