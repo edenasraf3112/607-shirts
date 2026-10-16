@@ -105,6 +105,7 @@ export default async function ProductsAdmin() {
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2 justify-end">
                         <Link href={`/admin/products/${p.id}/analytics`} className="text-xs text-warm-gray hover:text-charcoal underline">סטטיסטיקה</Link>
+                        <Link href={`/admin/products/${p.id}/distribution`} target="_blank" className="text-xs text-warm-gray hover:text-charcoal underline">ייצוא וחלוקה</Link>
                         <Link href={`/admin/products/${p.id}`} className="text-xs text-warm-gray hover:text-charcoal underline">ערוך</Link>
                         <DuplicateProductButton id={p.id} />
                         <DeleteProductButton id={p.id} name={p.name} />
