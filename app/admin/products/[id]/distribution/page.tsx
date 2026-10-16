@@ -4,6 +4,7 @@ import { getServiceClient } from '@/lib/supabase'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import PrintButton from '../../../orders/production-print/PrintButton'
+import DistributionChecklist from '@/components/admin/DistributionChecklist'
 import { DEMO_EMAIL } from '@/lib/demo'
 
 function isAuthed(): boolean {
@@ -108,6 +109,23 @@ function aggregateRows(orders: any[], productId: string, productName: string): {
   return { rows, totalQty, variantMode }
 }
 
+async function fetchCheckedKeys(productId: string): Promise<{ keys: string[]; missingTable: boolean }> {
+  const db = getServiceClient()
+  try {
+    const test = await db.from('distribution_checks').select('id').limit(0)
+    if (test.error) return { keys: [], missingTable: true }
+  } catch {
+    return { keys: [], missingTable: true }
+  }
+  try {
+    const { data, error } = await db.from('distribution_checks').select('check_key').like('check_key', `${productId}:%`)
+    if (error) throw error
+    return { keys: (data || []).map((r: any) => r.check_key), missingTable: false }
+  } catch {
+    return { keys: [], missingTable: false }
+  }
+}
+
 export default async function ProductDistributionPage({
   params,
   searchParams,
@@ -150,6 +168,8 @@ export default async function ProductDistributionPage({
 
   const variantLabel = variantMode === 'size' ? 'מידה' : 'צבע'
 
+  const { keys: checkedKeys, missingTable } = await fetchCheckedKeys(product.id)
+
   const today = new Date().toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric', year: 'numeric' })
 
   function toggleUrl(overrides: Record<string, string>) {
@@ -164,9 +184,11 @@ export default async function ProductDistributionPage({
         body { font-family: Arial, Helvetica, sans-serif !important; background: #fff; color: #1A1A1A; direction: rtl; }
         @media print {
           .no-print { display: none !important; }
+          .print-only { display: block !important; }
           body { margin: 0; }
           tr { page-break-inside: avoid; }
         }
+        .print-only { display: none; }
         .dist-table { border-collapse: collapse; width: 100%; }
         .dist-table th, .dist-table td { text-align: right; }
       `}</style>
@@ -211,7 +233,18 @@ export default async function ProductDistributionPage({
         )}
 
         {rows.length > 0 && (
-          <table className="dist-table">
+          <DistributionChecklist
+            productId={product.id}
+            rows={rows}
+            totalQty={totalQty}
+            variantLabel={variantLabel}
+            initialCheckedKeys={checkedKeys}
+            missingTable={missingTable}
+          />
+        )}
+
+        {rows.length > 0 && (
+          <table className="dist-table print-only">
             <thead>
               <tr style={{ borderBottom: '2px solid #1A1A1A' }}>
                 <th style={{ padding: '8px 8px 8px 0', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#6B6560', fontWeight: 400, width: '20%' }}>כמות</th>

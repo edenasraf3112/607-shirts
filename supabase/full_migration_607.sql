@@ -338,6 +338,16 @@ CREATE TABLE IF NOT EXISTS payment_checks (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Per-product handout checklist (ייצוא וחלוקה) — one row per customer+variant
+-- that's been checked off as handed out. Keyed by a composite string
+-- ("<product_id>:<customer name>:<size or color>") rather than a foreign key,
+-- since the row it represents is an aggregate across possibly several orders.
+CREATE TABLE IF NOT EXISTS distribution_checks (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  check_key TEXT UNIQUE NOT NULL,
+  checked_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================================
 -- Row Level Security
 -- ============================================================================
@@ -365,6 +375,7 @@ ALTER TABLE customer_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE popup_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payment_checks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE distribution_checks ENABLE ROW LEVEL SECURITY;
 
 -- Public read
 DROP POLICY IF EXISTS "Public read products" ON products;
@@ -447,6 +458,8 @@ DROP POLICY IF EXISTS "Service role product_notifications all" ON product_notifi
 CREATE POLICY "Service role product_notifications all" ON product_notifications FOR ALL USING (auth.role() = 'service_role');
 DROP POLICY IF EXISTS "Service role payment_checks all" ON payment_checks;
 CREATE POLICY "Service role payment_checks all" ON payment_checks FOR ALL USING (auth.role() = 'service_role');
+DROP POLICY IF EXISTS "Service role distribution_checks all" ON distribution_checks;
+CREATE POLICY "Service role distribution_checks all" ON distribution_checks FOR ALL USING (auth.role() = 'service_role');
 
 -- ============================================================================
 -- Storage buckets (public-read; service role bypasses RLS for writes)
