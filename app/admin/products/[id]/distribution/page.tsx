@@ -14,7 +14,8 @@ function isAuthed(): boolean {
 // shirts by size, so XXL goes on top.
 const SIZE_ORDER_DESC = ['4XL', '3XL', '2XL', 'XXL', 'XL', 'L', 'M', 'S', 'XS', 'XXS']
 
-type Row = { customer_name: string; size: string; quantity: number }
+type Row = { customer_name: string; variant: string; quantity: number }
+type VariantMode = 'size' | 'color'
 
 async function fetchOrders(opts: { paidOnly: boolean; excludeDemo: boolean }) {
   const db = getServiceClient()
@@ -45,8 +46,11 @@ async function fetchOrders(opts: { paidOnly: boolean; excludeDemo: boolean }) {
   return data || []
 }
 
-function aggregateRows(orders: any[], productId: string, productName: string): { rows: Row[]; totalQty: number } {
-  const map = new Map<string, Row>()
+function aggregateRows(orders: any[], productId: string, productName: string): { rows: Row[]; totalQty: number; variantMode: VariantMode } {
+  // Collect raw matched items first — decide size-vs-color per product (not
+  // per row), e.g. a hat with no sizes but several colors should group by
+  // color instead of showing an empty/dash "size" column.
+  const matched: { customerName: string; size: string; color: string; quantity: number }[] = []
 
   for (const order of orders) {
     const rawItems = order.items
@@ -61,33 +65,47 @@ function aggregateRows(orders: any[], productId: string, productName: string): {
         : (item.product_name || '').toString().trim() === productName
       if (!matches) continue
 
-      const size = (item.size || '—').toString()
-      const customerName = (order.customer_name || '').toString().trim()
-      const qty = Math.max(Number(item.quantity) || 1, 1)
-      const key = `${customerName}||${size}`
+      matched.push({
+        customerName: (order.customer_name || '').toString().trim(),
+        size: (item.size || '').toString().trim(),
+        color: (item.color || '').toString().trim(),
+        quantity: Math.max(Number(item.quantity) || 1, 1),
+      })
+    }
+  }
 
-      const existing = map.get(key)
-      if (existing) {
-        existing.quantity += qty
-      } else {
-        map.set(key, { customer_name: customerName, size, quantity: qty })
-      }
+  const hasSize = matched.some(m => m.size)
+  const variantMode: VariantMode = hasSize ? 'size' : 'color'
+
+  const map = new Map<string, Row>()
+  for (const m of matched) {
+    const variant = (variantMode === 'size' ? m.size : m.color) || '—'
+    const key = `${m.customerName}||${variant}`
+    const existing = map.get(key)
+    if (existing) {
+      existing.quantity += m.quantity
+    } else {
+      map.set(key, { customer_name: m.customerName, variant, quantity: m.quantity })
     }
   }
 
   const rows = Array.from(map.values()).sort((a, b) => {
-    const ai = SIZE_ORDER_DESC.indexOf(a.size.toUpperCase())
-    const bi = SIZE_ORDER_DESC.indexOf(b.size.toUpperCase())
-    if (ai !== bi) {
-      if (ai === -1) return 1
-      if (bi === -1) return -1
-      return ai - bi
+    if (variantMode === 'size') {
+      const ai = SIZE_ORDER_DESC.indexOf(a.variant.toUpperCase())
+      const bi = SIZE_ORDER_DESC.indexOf(b.variant.toUpperCase())
+      if (ai !== bi) {
+        if (ai === -1) return 1
+        if (bi === -1) return -1
+        return ai - bi
+      }
+    } else if (a.variant !== b.variant) {
+      return a.variant.localeCompare(b.variant, 'he')
     }
     return a.customer_name.localeCompare(b.customer_name, 'he')
   })
 
   const totalQty = rows.reduce((s, r) => s + r.quantity, 0)
-  return { rows, totalQty }
+  return { rows, totalQty, variantMode }
 }
 
 export default async function ProductDistributionPage({
@@ -118,15 +136,19 @@ export default async function ProductDistributionPage({
 
   let rows: Row[] = []
   let totalQty = 0
+  let variantMode: VariantMode = 'size'
   let fetchError = ''
   try {
     const orders = await fetchOrders({ paidOnly, excludeDemo })
     const result = aggregateRows(orders, product.id, product.name)
     rows = result.rows
     totalQty = result.totalQty
+    variantMode = result.variantMode
   } catch (e: any) {
     fetchError = e?.message || String(e) || 'שגיאה לא ידועה'
   }
+
+  const variantLabel = variantMode === 'size' ? 'מידה' : 'צבע'
 
   const today = new Date().toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric', year: 'numeric' })
 
@@ -194,7 +216,7 @@ export default async function ProductDistributionPage({
               <tr style={{ borderBottom: '2px solid #1A1A1A' }}>
                 <th style={{ padding: '8px 8px 8px 0', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#6B6560', fontWeight: 400, width: '20%' }}>כמות</th>
                 <th style={{ padding: '8px 0', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#6B6560', fontWeight: 400, width: '50%' }}>שם</th>
-                <th style={{ padding: '8px 0', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#6B6560', fontWeight: 400, textAlign: 'center', width: '30%' }}>מידה</th>
+                <th style={{ padding: '8px 0', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#6B6560', fontWeight: 400, textAlign: 'center', width: '30%' }}>{variantLabel}</th>
               </tr>
             </thead>
             <tbody>
@@ -202,7 +224,7 @@ export default async function ProductDistributionPage({
                 <tr key={i} style={{ borderBottom: '1px solid #E8E5E0', background: i % 2 === 0 ? '#fff' : '#FAFAF8' }}>
                   <td style={{ padding: '11px 8px 11px 0', fontSize: 18, fontWeight: 700 }}>{row.quantity}</td>
                   <td style={{ padding: '11px 0', fontSize: 14 }}>{row.customer_name}</td>
-                  <td style={{ padding: '11px 0', fontSize: 15, textAlign: 'center', fontWeight: 700 }}>{row.size}</td>
+                  <td style={{ padding: '11px 0', fontSize: 15, textAlign: 'center', fontWeight: 700 }}>{row.variant}</td>
                 </tr>
               ))}
               <tr style={{ borderTop: '2px solid #1A1A1A', background: '#F2F0EC' }}>
